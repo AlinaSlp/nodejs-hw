@@ -1,4 +1,5 @@
 import { Schema, model } from 'mongoose';
+import { tags } from '../contacts/tags.js';
 
 const noteSchema = new Schema(
   {
@@ -17,18 +18,7 @@ const noteSchema = new Schema(
       type: String,
       required: false,
       default: 'Todo',
-      enum: [
-        'Work',
-        'Personal',
-        'Meeting',
-        'Shopping',
-        'Ideas',
-        'Travel',
-        'Finance',
-        'Health',
-        'Important',
-        'Todo',
-      ],
+      enum: [...tags],
     },
   },
   {
@@ -36,5 +26,7 @@ const noteSchema = new Schema(
     versionKey: false,
   },
 );
+
+noteSchema.index({ title: 'text', content: 'text' });
 
 export const Note = model('Note', noteSchema);

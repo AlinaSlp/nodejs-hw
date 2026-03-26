@@ -3,6 +3,11 @@ import createHttpError from 'http-errors';
 
 export const getNotes = async (req, res) => {
   const { page = 1, perPage = 10, tag, search } = req.query;
+  const skip = (page - 1) * perPage;
+
+  // Створюємо базовий запит до колекції
+  const notesQuery = Note.find();
+
   const filter = {};
   if (tag) {
     filter.tag = tag;
@@ -10,10 +15,23 @@ export const getNotes = async (req, res) => {
   if (search) {
     filter.title = { $regex: search, $options: 'i' };
   }
-  const notes = await Note.find(filter)
-    .skip((page - 1) * perPage)
-    .limit(perPage);
-  res.status(200).json(notes);
+
+  // Виконуємо одразу два запити паралельно
+  const [totalItems, notes] = await Promise.all([
+    notesQuery.clone().countDocuments(),
+    notesQuery.skip(skip).limit(perPage),
+  ]);
+
+  // Обчислюємо загальну кількість «сторінок»
+  const totalPages = Math.ceil(totalItems / perPage);
+
+  res.status(200).json({
+    page,
+    perPage,
+    totalItems,
+    totalPages,
+    no,
+  });
 };
 
 export const getNoteById = async (req, res) => {
