@@ -30,7 +30,7 @@ export const getNotes = async (req, res) => {
     perPage,
     totalItems,
     totalPages,
-    no,
+    notes,
   });
 };
 
