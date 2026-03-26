@@ -1,34 +1,29 @@
 import { Note } from '../models/note.js';
 import createHttpError from 'http-errors';
 
-export const getNotes = async (req, res) => {
+export const getAllNotes = async (req, res) => {
   const { page = 1, perPage = 10, tag, search } = req.query;
   const skip = (page - 1) * perPage;
 
-  // Створюємо базовий запит до колекції
-  const notesQuery = Note.find();
-
   const filter = {};
-  if (tag) {
-    filter.tag = tag;
-  }
-  if (search) {
-    filter.title = { $regex: search, $options: 'i' };
-  }
+  if (tag) filter.tag = tag;
+  if (search) filter.$text = { $search: search }; // повнотекстовий пошук
+
+  const notesQuery = Note.find(filter);
 
   // Виконуємо одразу два запити паралельно
-  const [totalItems, notes] = await Promise.all([
+  const [totalNotes, notes] = await Promise.all([
     notesQuery.clone().countDocuments(),
     notesQuery.skip(skip).limit(perPage),
   ]);
 
   // Обчислюємо загальну кількість «сторінок»
-  const totalPages = Math.ceil(totalItems / perPage);
+  const totalPages = Math.ceil(totalNotes / perPage);
 
   res.status(200).json({
     page,
     perPage,
-    totalItems,
+    totalNotes,
     totalPages,
     notes,
   });
@@ -53,7 +48,7 @@ export const updateNote = async (req, res) => {
   const { noteId } = req.params;
   const updates = req.body;
   const updatedNote = await Note.findByIdAndUpdate(noteId, updates, {
-    new: true,
+    returnDocument: 'after',
     runValidators: true,
   });
   if (!updatedNote) {
@@ -68,5 +63,5 @@ export const deleteNote = async (req, res) => {
   if (!deletedNote) {
     throw createHttpError(404, 'Note not found');
   }
-  res.status(204).send();
+  res.status(200).json(deletedNote);
 };
