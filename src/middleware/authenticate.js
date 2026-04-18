@@ -34,7 +34,8 @@ export const authenticate = async (req, res, next) => {
   }
 
   // 7. Якщо користувач існує, додаємо його до запиту
-  req.user = user; // 8. Передаємо управління далі
+  req.user = user;
 
+  // 8. Передаємо управління далі
   next();
 };
